@@ -386,3 +386,22 @@ CREATE TABLE `types` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2025-12-03 14:54:19
+
+--
+-- Индексы для оптимизации запросов (CREATE INDEX)
+--
+
+-- 1. Индексы для ускорения поиска по названию и популярности шоу
+CREATE INDEX idx_shows_name ON shows (name);
+CREATE INDEX idx_shows_popularity ON shows (popularity);
+
+-- 2. Индексы для ускорения поиска по типам (для аналитики, например, по жанру)
+CREATE INDEX idx_genres_type_id ON genres (genre_type_id);
+CREATE INDEX idx_networks_type_id ON networks (network_type_id);
+
+-- 3. Индексы для ускорения поиска по странам происхождения и производства
+CREATE INDEX idx_production_countries_type ON production_countries (production_countries_type_id);
+CREATE INDEX idx_origin_country_type ON production_countries (origin_country_type_id);
+
+-- 4. Индекс для поиска по датам выхода (если нужно фильтровать по году/дате)
+CREATE INDEX idx_air_dates_date ON air_dates (date);
