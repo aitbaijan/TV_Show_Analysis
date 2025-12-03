@@ -405,3 +405,88 @@ CREATE INDEX idx_origin_country_type ON production_countries (origin_country_typ
 
 -- 4. Индекс для поиска по датам выхода (если нужно фильтровать по году/дате)
 CREATE INDEX idx_air_dates_date ON air_dates (date);
+
+--
+-- АНАЛИТИЧЕСКИЕ ЗАПРОСЫ (Эквивалент 03_analysis_queries.sql)
+-- Здесь используются команды SELECT, которые отвечают на цели проекта.
+--
+
+-- 1. Топ-10 самых популярных ТВ-шоу (по показателю 'popularity')
+-- Цель: Выявить абсолютных лидеров по вниманию зрителей.
+SELECT 
+    show_id, 
+    name, 
+    popularity, 
+    tagline
+FROM 
+    shows
+ORDER BY 
+    popularity DESC
+LIMIT 10;
+
+-- 2. Рейтинг жанров: Какие жанры имеют самый высокий средний балл (vote_average)?
+-- Цель: Определить, какие типы контента получают наилучшие отзывы.
+SELECT 
+    gt.genre_name,
+    COUNT(s.show_id) AS total_shows,
+    -- Средний балл (vote_average) хранится в show_votes
+    AVG(sv.vote_average) AS avg_vote_score
+FROM 
+    genre_types gt
+JOIN 
+    genres g ON gt.genre_type_id = g.genre_type_id
+JOIN 
+    shows s ON g.show_id = s.show_id
+JOIN 
+    show_votes sv ON s.show_id = sv.show_id
+GROUP BY 
+    gt.genre_name
+HAVING 
+    COUNT(s.show_id) >= 10 -- Учитываем только жанры с достаточным количеством шоу
+ORDER BY 
+    avg_vote_score DESC;
+
+-- 3. Анализ успешности по количеству сезонов: 
+-- Сколько сезонов в среднем у шоу с высоким рейтингом (vote_average > 7)?
+-- Цель: Проверить, связана ли долговечность шоу с его качеством.
+SELECT 
+    AVG(s.number_of_seasons) AS avg_seasons_high_rated,
+    MIN(s.number_of_seasons) AS min_seasons,
+    MAX(s.number_of_seasons) AS max_seasons
+FROM 
+    shows s
+JOIN 
+    show_votes sv ON s.show_id = sv.show_id
+WHERE 
+    sv.vote_average > 7;
+
+-- 4. Топ-5 стран, которые производят самые популярные шоу (по суммарной популярности)
+-- Цель: Выявить ключевые страны-производители на мировом рынке.
+SELECT 
+    oct.origin_country_name,
+    SUM(s.popularity) AS total_popularity
+FROM 
+    shows s
+JOIN 
+    production_countries pc ON s.show_id = pc.show_id
+JOIN 
+    origin_country_types oct ON pc.origin_country_type_id = oct.origin_country_type_id
+GROUP BY 
+    oct.origin_country_name
+ORDER BY 
+    total_popularity DESC
+LIMIT 5;
+
+-- 5. Статус производства: Распределение шоу по текущему статусу (In Production, Ended, etc.)
+-- Цель: Оценить активность и завершенность проектов.
+SELECT 
+    st.status_name,
+    COUNT(s.show_id) AS total_shows
+FROM 
+    shows s
+JOIN 
+    status st ON s.status_id = st.status_id
+GROUP BY 
+    st.status_name
+ORDER BY 
+    total_shows DESC;
